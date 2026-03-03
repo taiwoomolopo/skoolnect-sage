@@ -1,0 +1,1 @@
+Play-based learning supports cognitive, emotional and social development in early childhood.
