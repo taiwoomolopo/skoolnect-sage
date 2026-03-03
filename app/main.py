@@ -5,6 +5,8 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from typing import Optional
 
+from app.db.init_db import init_db
+
 from app.prompts.master_prompt import MASTER_PROMPT
 from app.prompts.teacher_mode import TEACHER_MODE
 from app.prompts.parent_mode import PARENT_MODE
@@ -117,3 +119,16 @@ def chat(request: ChatRequest):
         return {
             "response": "An error occurred. Please check logs."
         }
+        
+ # ==============================
+# HEALTH CHECK
+# ==============================       
+
+@app.get("/")
+def health():
+    return {"status": "ok"}
+    
+    
+@app.on_event("startup")
+def startup():
+    init_db()    
