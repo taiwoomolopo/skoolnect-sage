@@ -8,6 +8,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from app.services.llm_service import generate_response
 from app.services.rag_service import retrieve_context
+from app.db.session import engine
+from app.db.base import Base
 from app.services.memory_service import (
     create_conversation,
     save_message,
@@ -20,6 +22,9 @@ from app.prompts.teacher_mode import TEACHER_MODE
 from app.prompts.parent_mode import PARENT_MODE
 
 app = FastAPI()
+
+
+Base.metadata.create_all(bind=engine)
 
 # -------------------------------
 # CORS MIDDLEWARE
