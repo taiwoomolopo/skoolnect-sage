@@ -29,15 +29,18 @@ with st.sidebar:
         conversations = []
 
     for conv in conversations:
-        if st.button(conv["title"]):
 
-            st.session_state.conversation_id = conv["id"]
+    title = conv.get("title", f"Chat {conv['id']}")
 
-            res = requests.get(
-                f"{BASE_URL}/conversations/{conv['id']}"
-            )
+    if st.button(title):
 
-            st.session_state.messages = res.json()
+        st.session_state.conversation_id = conv["id"]
+
+        res = requests.get(
+            f"{BASE_URL}/conversations/{conv['id']}"
+        )
+
+        st.session_state.messages = res.json()
 
 # CHAT DISPLAY
 for msg in st.session_state.messages:
