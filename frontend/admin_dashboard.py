@@ -1,43 +1,71 @@
 import streamlit as st
 import requests
 
-st.set_page_config(page_title="Skoolnect Admin", layout="wide")
-st.title("📊 Skoolnect Admin Dashboard")
-
 BASE_URL = "https://skoolnect-backend.onrender.com"
 
-# ===============================
-# CONVERSATIONS OVERVIEW
-# ===============================
-st.header("All Conversations")
+ADMIN_PASSWORD = "admin123"
+
+if "auth" not in st.session_state:
+    st.session_state.auth = False
+
+if not st.session_state.auth:
+
+    pwd = st.text_input("Admin Password", type="password")
+
+    if st.button("Login"):
+
+        if pwd == ADMIN_PASSWORD:
+            st.session_state.auth = True
+            st.rerun()
+        else:
+            st.error("Wrong password")
+
+    st.stop()
+
+st.title("Skoolnect Admin Dashboard")
+
+# ---------------------
+# USAGE MONITORING
+# ---------------------
+
+st.header("Usage Monitoring")
 
 try:
-    res = requests.get(f"{BASE_URL}/conversations")
-    conversations = res.json() if res.status_code == 200 else []
+    res = requests.get(f"{BASE_URL}/usage")
+    usage = res.json()
 except:
-    conversations = []
+    usage = []
 
-st.metric("Total Conversations", len(conversations))
+total_tokens = sum(u["tokens_used"] for u in usage)
+
+st.metric("Total Tokens Used", total_tokens)
 
 st.divider()
 
-# ===============================
-# VIEW CONVERSATION DETAILS
-# ===============================
-selected_conv = st.selectbox(
-    "Select Conversation ID",
-    [conv["id"] for conv in conversations] if conversations else []
+# ---------------------
+# CONVERSATIONS
+# ---------------------
+
+st.header("Conversations")
+
+res = requests.get(f"{BASE_URL}/conversations")
+conversations = res.json()
+
+selected = st.selectbox(
+    "Select conversation",
+    [c["id"] for c in conversations]
 )
 
-if selected_conv:
-    try:
-        res = requests.get(f"{BASE_URL}/conversations/{selected_conv}")
-        messages = res.json() if res.status_code == 200 else []
-    except:
-        messages = []
+if selected:
 
-    st.subheader(f"Conversation {selected_conv}")
+    res = requests.get(
+        f"{BASE_URL}/conversations/{selected}"
+    )
 
-    for msg in messages:
-        st.markdown(f"**{msg['role'].capitalize()}**: {msg['content']}")
+    messages = res.json()
+
+    for m in messages:
+
+        st.write(f"**{m['role']}**")
+        st.write(m["content"])
         st.divider()

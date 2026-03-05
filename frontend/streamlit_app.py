@@ -1,85 +1,53 @@
 import streamlit as st
 import requests
 
-# ===============================
-# CONFIG
-# ===============================
-st.set_page_config(page_title="Skoolnect Sage", layout="centered")
-st.title("🧠 Skoolnect Sage")
+st.set_page_config(page_title="Skoolnect Sage", layout="wide")
 
 BASE_URL = "https://skoolnect-backend.onrender.com"
 
-# ===============================
-# SESSION STATE
-# ===============================
+st.title("🧠 Skoolnect Sage")
+
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
 if "conversation_id" not in st.session_state:
     st.session_state.conversation_id = None
 
-if "role" not in st.session_state:
-    st.session_state.role = "teacher"
-
-# ===============================
 # SIDEBAR
-# ===============================
 with st.sidebar:
-    st.header("💬 Conversations")
 
-    if st.button("➕ New Chat"):
+    st.header("Conversations")
+
+    if st.button("New Chat"):
         st.session_state.messages = []
         st.session_state.conversation_id = None
 
-    st.divider()
-
-    # Fetch conversations
     try:
         res = requests.get(f"{BASE_URL}/conversations")
-        conversations = res.json() if res.status_code == 200 else []
+        conversations = res.json()
     except:
         conversations = []
 
     for conv in conversations:
-        if st.button(f"Chat {conv['id']}"):
+        if st.button(conv["title"]):
+
             st.session_state.conversation_id = conv["id"]
 
-            try:
-                res = requests.get(
-                    f"{BASE_URL}/conversations/{conv['id']}"
-                )
-                old_messages = res.json() if res.status_code == 200 else []
+            res = requests.get(
+                f"{BASE_URL}/conversations/{conv['id']}"
+            )
 
-                st.session_state.messages = [
-                    {
-                        "role": msg["role"],
-                        "content": msg["content"]
-                    }
-                    for msg in old_messages
-                ]
-            except:
-                st.session_state.messages = []
+            st.session_state.messages = res.json()
 
-# ===============================
-# ROLE SELECTOR
-# ===============================
-st.session_state.role = st.selectbox(
-    "Role",
-    ["teacher", "parent"],
-    index=0 if st.session_state.role == "teacher" else 1
-)
+# CHAT DISPLAY
+for msg in st.session_state.messages:
 
-# ===============================
-# DISPLAY CHAT
-# ===============================
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
+    with st.chat_message(msg["role"]):
+        st.markdown(msg["content"])
 
-# ===============================
-# CHAT INPUT
-# ===============================
-if prompt := st.chat_input("Ask Skoolnect Sage something..."):
+prompt = st.chat_input("Ask Skoolnect Sage...")
+
+if prompt:
 
     st.session_state.messages.append(
         {"role": "user", "content": prompt}
@@ -88,34 +56,24 @@ if prompt := st.chat_input("Ask Skoolnect Sage something..."):
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    try:
-        with st.chat_message("assistant"):
-            with st.spinner("Sage is thinking..."):
+    res = requests.post(
+        f"{BASE_URL}/chat",
+        json={
+            "role": "teacher",
+            "message": prompt,
+            "conversation_id": st.session_state.conversation_id
+        }
+    )
 
-                res = requests.post(
-                    f"{BASE_URL}/chat",
-                    json={
-                        "role": st.session_state.role,
-                        "message": prompt,
-                        "conversation_id": st.session_state.conversation_id
-                    }
-                )
+    data = res.json()
 
-                if res.status_code == 200:
-                    data = res.json()
-                    assistant_reply = data.get("response", "Error.")
+    reply = data["response"]
 
-                    if "conversation_id" in data:
-                        st.session_state.conversation_id = data["conversation_id"]
-                else:
-                    assistant_reply = "Backend error."
-
-    except Exception as e:
-        assistant_reply = f"Frontend error: {str(e)}"
+    st.session_state.conversation_id = data["conversation_id"]
 
     st.session_state.messages.append(
-        {"role": "assistant", "content": assistant_reply}
+        {"role": "assistant", "content": reply}
     )
 
     with st.chat_message("assistant"):
-        st.markdown(assistant_reply)
+        st.markdown(reply)
