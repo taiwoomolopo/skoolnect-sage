@@ -32,15 +32,28 @@ st.header("Usage Monitoring")
 
 try:
     res = requests.get(f"{BASE_URL}/usage")
-    usage = res.json()
-except:
-    usage = []
+    data = res.json()
 
-total_tokens = sum(u["tokens_used"] for u in usage)
+ # Ensure backend returned a list
+    if isinstance(data, list):
+        usage = data
 
-st.metric("Total Tokens Used", total_tokens)
+        total_tokens = sum(u["tokens_used"] for u in usage)
 
-st.divider()
+        st.metric("Total Tokens Used", total_tokens)
+
+        st.subheader("Usage Records")
+        st.json(usage)
+
+    else:
+
+        st.error("Unexpected response from backend")
+        st.json(data)
+
+except Exception as e:
+    st.error(f"Error fetching usage: {str(e)}")
+
+
 
 # ---------------------
 # CONVERSATIONS
