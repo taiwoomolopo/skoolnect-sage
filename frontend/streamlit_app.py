@@ -30,11 +30,11 @@ with st.sidebar:
 
     for conv in conversations:
 
-    title = conv.get("title", f"Chat {conv['id']}")
+        title = conv.get("title", f"Chat {conv['id']}")
 
-    if st.button(title):
+        if st.button(title):
 
-        st.session_state.conversation_id = conv["id"]
+            st.session_state.conversation_id = conv["id"]
 
         res = requests.get(
             f"{BASE_URL}/conversations/{conv['id']}"
