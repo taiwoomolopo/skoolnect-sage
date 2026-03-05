@@ -105,3 +105,7 @@ def conversation_messages(conversation_id: int):
 @app.get("/usage")
 def usage():
     return get_usage_stats()
+
+@app.get("/")
+def root():
+    return {"message": "Skoolnect Sage API is running"}
